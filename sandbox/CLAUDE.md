@@ -115,9 +115,12 @@ Note: TinyGo's network stack crashes in QEMU user-mode.
 
 ## WASM Runtimes
 
-Testing WASM requires bundling a runtime (wasmtime, wasmer):
-- Wasmtime hello: ~25M instructions
-- Wasmer hello: ~31M instructions (22% slower)
+Testing WASM requires bundling a runtime (wasmtime, wasmer). Requires `--tmpfs=/root` for cache directories.
+
+| Runtime | Instructions | Notes |
+|---------|-------------:|-------|
+| Wasmtime | 27,659,780 | hello.wasm |
+| Wasmer | 30,268,534 | 9% slower |
 
 WASI has limited socket support, so port scanner not feasible.
 

@@ -1,0 +1,17 @@
+FROM ubuntu:24.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    erlang-base \
+    elixir \
+    tcl \
+    php-cli \
+    perl \
+    luajit \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy the QEMU binary and plugin from the main sandbox
+COPY --from=sandbox /usr/local/bin/qemu-x86_64 /usr/local/bin/
+COPY --from=sandbox /plugin/sandbox.so /plugin/
+
+WORKDIR /work
+ENTRYPOINT ["sh", "-c", "qemu-x86_64 -cpu max -plugin /plugin/sandbox.so,limit=$LIMIT /work/binary \"$@\"", "--"]

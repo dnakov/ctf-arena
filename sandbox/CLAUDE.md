@@ -104,3 +104,19 @@ tests/              # Test binaries in various languages
 | Node | 176,107,839 |
 | Python (PyInstaller) | 376,920,746 |
 | Racket | 1,390,379,233 |
+
+## TinyGo vs Go
+
+TinyGo produces much smaller and more efficient binaries:
+- TinyGo hello: 85,651 instructions
+- Standard Go hello: 747,617 instructions (9x more)
+
+Note: TinyGo's network stack crashes in QEMU user-mode.
+
+## WASM Runtimes
+
+Testing WASM requires bundling a runtime (wasmtime, wasmer):
+- Wasmtime hello: ~25M instructions
+- Wasmer hello: ~31M instructions (22% slower)
+
+WASI has limited socket support, so port scanner not feasible.

@@ -1,0 +1,19 @@
+FROM --platform=linux/amd64 ubuntu:24.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    make \
+    libglib2.0-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Build plugin for native x86_64
+COPY plugin/ /plugin/
+RUN curl -sL https://raw.githubusercontent.com/qemu/qemu/v9.2.0/include/qemu/qemu-plugin.h -o /plugin/qemu-plugin.h || true
+# Can't use TCG plugin without QEMU - need different approach
+
+RUN mkdir /work
+WORKDIR /work
+
+# Just run the binary directly - use perf or other tools for counting
+ENTRYPOINT ["/work/binary"]

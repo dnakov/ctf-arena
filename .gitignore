@@ -1,0 +1,49 @@
+# Compiled binaries
+*.o
+*.a
+*.so
+*.dylib
+
+# C/C++
+*.out
+
+# Go
+/bin/
+
+# Rust
+/target/
+Cargo.lock
+
+# Zig
+zig-cache/
+zig-out/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Node/Bun/Deno
+node_modules/
+dist/
+.bun/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*~
+
+# OS
+.DS_Store
+
+# Test binaries
+sandbox/tests/hello
+sandbox/tests/hello_*
+sandbox/tests/portscan
+sandbox/tests/portscan_*
+sandbox/tests/infinite
+sandbox/tests/empty_*
+!sandbox/tests/*.*

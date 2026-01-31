@@ -38,6 +38,8 @@ def run(
                 f"--memory-swap={memory_limit_mb}m",
                 "--network=none",
                 "--read-only",
+                "--tmpfs=/tmp:rw,exec,nosuid,size=64m",
+                "--tmpfs=/var:rw,nosuid,size=16m",
                 "-e", f"LIMIT={instruction_limit}",
                 "-v", f"{binary_path}:/work/binary:ro",
                 "sandbox",

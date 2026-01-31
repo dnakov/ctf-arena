@@ -70,23 +70,37 @@ tests/              # Test binaries in various languages
 - Supports Go binaries (looks for `main.main` symbol)
 - Reports VmPeak from `/proc/self/status`
 
-## Current Issues
+## Notes
 
-**Bun/modern runtimes crash**: QEMU user-mode on ARM host (via Docker) doesn't fully support all x86_64 syscalls. Specifically:
-- `rseq` (syscall 334) returns "Unknown syscall"
-- io_uring related calls may fail
-- Latest Bun crashes after ~19M instructions with illegal instruction
+- Sandbox uses `--tmpfs=/tmp` and `--tmpfs=/var` to support runtimes that need temp extraction (PyInstaller, etc.)
+- On native Linux x86_64, all major runtimes work (Bun, Deno, Node, Python, etc.)
+- Previous Mac/ARM issues with QEMU are resolved on native Linux
 
-**Workaround**: Use Bun 1.0.0 which works: `oven/bun:1.0.0`
+## Instruction Count Reference (Port Scanner - 3 ports)
 
-## Instruction Count Reference
-
-| Language | Hello World |
-|----------|-------------|
-| Assembly | 8 |
-| Zig | 461 |
-| musl C | 2,008 |
-| glibc C (dynamic) | 100,618 |
-| Rust (musl) | ~13,000 |
-| Go | ~550,000 (stripped) / ~2,400 (with symbols, from main.main) |
-| Bun 1.0 | ~21,000,000 |
+| Language | Instructions |
+|----------|-------------:|
+| Assembly (hand-optimized) | 51 |
+| Zig | 594 |
+| C (raw syscalls) | 1,525 |
+| C (musl) | 2,008 |
+| Nim | 23,580 |
+| Rust (musl) | 24,530 |
+| Pascal | 30,375 |
+| Swift | 45,503 |
+| OCaml | 295,270 |
+| Lua 5.4 | 410,182 |
+| LuaJIT | 433,335 |
+| C++ | 535,110 |
+| Haskell | 558,511 |
+| Scala (GraalVM) | 922,764 |
+| Go | 1,120,285 |
+| Java (GraalVM) | 1,134,302 |
+| Clojure (GraalVM) | 1,147,912 |
+| Kotlin (GraalVM) | 1,219,305 |
+| C# (.NET AOT) | 3,203,528 |
+| Bun | 17,653,512 |
+| Deno | 130,547,222 |
+| Node | 176,107,839 |
+| Python (PyInstaller) | 376,920,746 |
+| Racket | 1,390,379,233 |

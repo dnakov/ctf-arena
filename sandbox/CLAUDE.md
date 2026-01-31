@@ -120,3 +120,19 @@ Testing WASM requires bundling a runtime (wasmtime, wasmer):
 - Wasmer hello: ~31M instructions (22% slower)
 
 WASI has limited socket support, so port scanner not feasible.
+
+## Interpreted Language Benchmarks
+
+For interpreted languages, static runtimes were built:
+
+| Language | Instructions | Notes |
+|----------|-------------:|-------|
+| Tcl (jimtcl) | 2,712,888 | jimtcl static build |
+| PHP (static) | 271,116,527 | static-php-cli build |
+
+## Pending/Not Working
+
+- **Erlang/Elixir**: BEAM VM too complex to bundle statically
+- **Perl**: PAR::Packer binary doesn't work in QEMU sandbox
+- **PyPy**: PyInstaller doesn't support PyPy
+- **TinyGo**: Network syscalls crash in QEMU (hello world: 85K works)

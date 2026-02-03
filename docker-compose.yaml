@@ -1,0 +1,92 @@
+version: "3.8"
+
+services:
+  # NATS with JetStream
+  nats:
+    image: nats:2.10-alpine
+    command: ["-js", "-sd", "/data"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"  # monitoring
+    volumes:
+      - nats-data:/data
+
+  # PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ctf
+      POSTGRES_PASSWORD: ctf-secret-password
+      POSTGRES_DB: ctf
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  # API
+  api:
+    build: ./api
+    ports:
+      - "3000:3000"
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "3000"
+      NATS_URL: "nats://nats:4222"
+      DATABASE_URL: "postgres://ctf:ctf-secret-password@postgres:5432/ctf"
+      DEFAULT_INSTRUCTION_LIMIT: "10000000"
+      MAX_INSTRUCTION_LIMIT: "1000000000"
+      MEMORY_LIMIT_MB: "256"
+      TIMEOUT_SEC: "30"
+      MAX_BINARY_SIZE: "104857600"
+      MAX_CONCURRENT: "4"
+      SANDBOX_IMAGE: "sandbox:latest"
+      JOB_TTL_SECONDS: "3600"
+      COMPILE_TIMEOUT_SEC: "120"
+      MAX_SOURCE_SIZE: "1048576"
+      BINARY_TTL_SECONDS: "86400"
+    depends_on:
+      - nats
+      - postgres
+
+  # Execute Worker (sandbox execution)
+  worker:
+    build: ./worker
+    environment:
+      NATS_URL: "nats://nats:4222"
+      SANDBOX_IMAGE: "sandbox:latest"
+      MEMORY_LIMIT_MB: "256"
+      TIMEOUT_SEC: "30"
+      JOB_TTL_SECONDS: "3600"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp:/tmp
+    depends_on:
+      - nats
+
+  # Compile Worker
+  compile-worker:
+    build: ./compile-worker
+    environment:
+      NATS_URL: "nats://nats:4222"
+      COMPILER_IMAGE: "compiler:latest"
+      COMPILE_MEMORY_LIMIT_MB: "4096"
+      COMPILE_TIMEOUT_SEC: "120"
+      JOB_TTL_SECONDS: "3600"
+      BINARY_TTL_SECONDS: "86400"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp:/tmp
+    depends_on:
+      - nats
+
+  # Web Frontend
+  web:
+    build: ./web
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  nats-data:
+  postgres-data:

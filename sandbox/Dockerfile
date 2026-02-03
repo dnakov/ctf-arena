@@ -38,4 +38,8 @@ RUN cd /plugin && make
 RUN mkdir /work
 WORKDIR /work
 
-ENTRYPOINT ["sh", "-c", "qemu-x86_64 -cpu max -plugin /plugin/sandbox.so,limit=$LIMIT /work/binary"]
+# Wrapper script to pass environment variables to QEMU
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

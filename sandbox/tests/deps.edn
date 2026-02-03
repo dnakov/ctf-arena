@@ -1,0 +1,5 @@
+{:paths ["src"]
+ :deps {}
+ :aliases {:uberjar {:replace-deps {com.github.seancorfield/depstar {:mvn/version "2.1.303"}}
+                     :exec-fn hf.depstar/uberjar
+                     :exec-args {:jar "portscan_clj.jar" :aot true :main-class portscan}}}}

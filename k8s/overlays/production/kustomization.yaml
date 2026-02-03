@@ -1,0 +1,62 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - hpa.yaml
+
+# Production image references (customize for your registry)
+images:
+  - name: ctf-api
+    newName: gcr.io/PROJECT_ID/ctf-api
+    newTag: latest
+  - name: sandbox
+    newName: gcr.io/PROJECT_ID/sandbox
+    newTag: latest
+
+# Production patches
+patches:
+  # Multiple replicas and production resources
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: ctf-api
+      spec:
+        replicas: 3
+        template:
+          spec:
+            containers:
+              - name: api
+                resources:
+                  requests:
+                    memory: "256Mi"
+                    cpu: "250m"
+                  limits:
+                    memory: "1Gi"
+                    cpu: "1000m"
+              - name: dind
+                resources:
+                  requests:
+                    memory: "1Gi"
+                    cpu: "500m"
+                  limits:
+                    memory: "4Gi"
+                    cpu: "2000m"
+
+  # LoadBalancer service for external access
+  - patch: |-
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: ctf-api
+      spec:
+        type: LoadBalancer
+
+# Production config overrides
+configMapGenerator:
+  - name: ctf-api-config
+    behavior: merge
+    literals:
+      - MAX_CONCURRENT=8
+      - SANDBOX_IMAGE=gcr.io/PROJECT_ID/sandbox:latest

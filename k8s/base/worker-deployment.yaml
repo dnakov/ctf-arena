@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ctf-worker
+  namespace: ctf-arena
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ctf-worker
+  template:
+    metadata:
+      labels:
+        app: ctf-worker
+    spec:
+      containers:
+        # Worker container
+        - name: worker
+          image: ctf-worker:latest
+          env:
+            - name: NATS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ctf-api-config
+                  key: NATS_URL
+            - name: SANDBOX_IMAGE
+              valueFrom:
+                configMapKeyRef:
+                  name: ctf-api-config
+                  key: SANDBOX_IMAGE
+            - name: MEMORY_LIMIT_MB
+              valueFrom:
+                configMapKeyRef:
+                  name: ctf-api-config
+                  key: MEMORY_LIMIT_MB
+            - name: TIMEOUT_SEC
+              valueFrom:
+                configMapKeyRef:
+                  name: ctf-api-config
+                  key: TIMEOUT_SEC
+            - name: JOB_TTL_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: ctf-api-config
+                  key: JOB_TTL_SECONDS
+            - name: API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ctf-api-config
+                  key: API_URL
+            - name: DOCKER_HOST
+              value: "tcp://localhost:2375"
+          volumeMounts:
+            - name: shared-tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+
+        # Docker-in-Docker sidecar
+        - name: dind
+          image: docker:27-dind
+          securityContext:
+            privileged: true
+          command: ["dockerd-entrypoint.sh"]
+          args: ["--insecure-registry=kind-registry:5000", "--insecure-registry=172.18.0.3:5000"]
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: ""
+          volumeMounts:
+            - name: shared-tmp
+              mountPath: /tmp
+            - name: dind-storage
+              mountPath: /var/lib/docker
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    # Wait for Docker to be ready
+                    until docker info >/dev/null 2>&1; do sleep 1; done
+                    # Pull sandbox image from local registry if not present
+                    docker pull 172.18.0.3:5000/sandbox:latest 2>/dev/null && docker tag 172.18.0.3:5000/sandbox:latest sandbox:latest || true
+
+      volumes:
+        - name: shared-tmp
+          emptyDir: {}
+        - name: dind-storage
+          emptyDir: {}

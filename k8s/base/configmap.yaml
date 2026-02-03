@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ctf-api-config
+  namespace: ctf-arena
+data:
+  HOST: "0.0.0.0"
+  PORT: "3000"
+  DEFAULT_INSTRUCTION_LIMIT: "10000000000"
+  MAX_INSTRUCTION_LIMIT: "1000000000000"
+  MEMORY_LIMIT_MB: "512"
+  TIMEOUT_SEC: "30"
+  MAX_BINARY_SIZE: "209715200"
+  MAX_CONCURRENT: "4"
+  SANDBOX_IMAGE: "sandbox:latest"
+  DOCKER_HOST: "tcp://localhost:2375"
+  NATS_URL: "nats://nats:4222"
+  DATABASE_URL: "postgres://ctf:ctf-secret-password@postgres:5432/ctf"
+  JOB_TTL_SECONDS: "3600"
+  RATE_LIMIT_PER_MINUTE: "10"
+  API_URL: "http://ctf-api:3000"
+  # Compile-related settings
+  COMPILE_TIMEOUT_SEC: "120"
+  MAX_SOURCE_SIZE: "1048576"
+  BINARY_TTL_SECONDS: "86400"
+  # GitHub OAuth settings (override with secrets in production)
+  GITHUB_CLIENT_ID: ""
+  GITHUB_CLIENT_SECRET: ""
+  GITHUB_CALLBACK_URL: "http://localhost:8080/auth/github/callback"
+  SESSION_SECRET: "development-session-secret-change-in-production"
+  FRONTEND_URL: "http://localhost:8080"

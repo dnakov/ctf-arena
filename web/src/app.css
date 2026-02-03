@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom scrollbar for dark mode */
+::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+::-webkit-scrollbar-track {
+	background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb {
+	background: #475569;
+	border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: #64748b;
+}
+
+/* Monaco editor container */
+.monaco-editor-container {
+	height: 100%;
+	width: 100%;
+}
+
+/* Status indicator animations */
+@keyframes pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.5;
+	}
+}
+
+.animate-pulse-slow {
+	animation: pulse 2s ease-in-out infinite;
+}
+
+/* Code output styling */
+.code-output {
+	font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+	white-space: pre-wrap;
+	word-break: break-all;
+}

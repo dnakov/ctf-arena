@@ -11,7 +11,7 @@
 /bin/
 
 # Rust
-/target/
+target/
 Cargo.lock
 
 # Zig
@@ -29,6 +29,8 @@ venv/
 node_modules/
 dist/
 .bun/
+.svelte-kit/
+build/
 
 # IDE
 .idea/
@@ -39,11 +41,50 @@ dist/
 # OS
 .DS_Store
 
-# Test binaries
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Test binaries and build artifacts
 sandbox/tests/hello
 sandbox/tests/hello_*
 sandbox/tests/portscan
 sandbox/tests/portscan_*
 sandbox/tests/infinite
 sandbox/tests/empty_*
-!sandbox/tests/*.*
+sandbox/tests/*.o
+sandbox/tests/*.beam
+sandbox/tests/*.cmi
+sandbox/tests/*.cmx
+sandbox/tests/*.hi
+sandbox/tests/*.ljbc
+sandbox/tests/*.luac
+sandbox/tests/*.wasm
+sandbox/tests/*.wat
+sandbox/tests/*.jar
+sandbox/tests/*.mojo
+sandbox/tests/*.nelua
+sandbox/tests/jimtcl
+sandbox/tests/jimtcl_static
+sandbox/tests/perl_*
+sandbox/tests/php_*
+sandbox/tests/tclkit
+sandbox/tests/tclsh
+sandbox/tests/tclsh_static/
+sandbox/tests/wasm3
+sandbox/tests/wasmer
+sandbox/tests/wasmtime
+sandbox/tests/.cpcache/
+sandbox/tests/src/
+!sandbox/tests/*.c
+!sandbox/tests/*.S
+!sandbox/tests/*.go
+!sandbox/tests/*.rs
+!sandbox/tests/*.zig
+!sandbox/tests/*.lua
+!sandbox/tests/*.sh
+!sandbox/tests/*.edn
+
+# Baselines (generated benchmark data)
+baselines/

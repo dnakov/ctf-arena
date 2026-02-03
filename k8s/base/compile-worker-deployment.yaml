@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compile-worker
+  namespace: ctf-arena
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: compile-worker
+  template:
+    metadata:
+      labels:
+        app: compile-worker
+    spec:
+      containers:
+        # Compile Worker container
+        - name: compile-worker
+          image: compile-worker:latest
+          env:
+            - name: NATS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ctf-api-config
+                  key: NATS_URL
+            - name: COMPILER_IMAGE
+              value: "compiler:latest"
+            - name: COMPILE_MEMORY_LIMIT_MB
+              value: "4096"
+            - name: COMPILE_TIMEOUT_SEC
+              value: "120"
+            - name: JOB_TTL_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: ctf-api-config
+                  key: JOB_TTL_SECONDS
+            - name: BINARY_TTL_SECONDS
+              value: "86400"
+            - name: DOCKER_HOST
+              value: "tcp://localhost:2375"
+          volumeMounts:
+            - name: shared-tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "2000m"
+
+        # Docker-in-Docker sidecar for compilation
+        - name: dind
+          image: docker:27-dind
+          securityContext:
+            privileged: true
+          command: ["dockerd-entrypoint.sh"]
+          args: ["--insecure-registry=kind-registry:5000", "--insecure-registry=172.18.0.3:5000"]
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: ""
+          volumeMounts:
+            - name: shared-tmp
+              mountPath: /tmp
+            - name: dind-storage
+              mountPath: /var/lib/docker
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    # Wait for Docker to be ready
+                    until docker info >/dev/null 2>&1; do sleep 1; done
+                    # Pull compiler image from local registry if not present
+                    docker pull 172.18.0.3:5000/compiler:latest 2>/dev/null && docker tag 172.18.0.3:5000/compiler:latest compiler:latest || true
+
+      volumes:
+        - name: shared-tmp
+          emptyDir: {}
+        - name: dind-storage
+          emptyDir:
+            sizeLimit: 30Gi  # Large to accommodate compiler image (~15-20GB)

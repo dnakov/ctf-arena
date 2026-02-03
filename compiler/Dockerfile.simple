@@ -1,0 +1,46 @@
+# Simple compiler image for testing - C/C++/Assembly/Go/Zig support
+FROM alpine:3.21
+
+RUN apk add --no-cache \
+    bash \
+    gcc \
+    g++ \
+    musl-dev \
+    binutils \
+    make \
+    go \
+    zig
+
+COPY compile.sh /compiler/compile.sh
+COPY scripts/compile-c.sh /compiler/scripts/compile-c.sh
+COPY scripts/compile-cpp.sh /compiler/scripts/compile-cpp.sh
+COPY scripts/compile-asm.sh /compiler/scripts/compile-asm.sh
+COPY scripts/compile-go.sh /compiler/scripts/compile-go.sh
+COPY scripts/compile-zig.sh /compiler/scripts/compile-zig.sh
+
+RUN chmod +x /compiler/compile.sh /compiler/scripts/*.sh
+
+# Alpine uses gcc directly for static linking (not musl-gcc wrapper)
+RUN echo '#!/bin/bash' > /compiler/scripts/compile-c.sh && \
+    echo 'set -e' >> /compiler/scripts/compile-c.sh && \
+    echo 'case "$OPTIMIZATION" in' >> /compiler/scripts/compile-c.sh && \
+    echo '    debug) FLAGS="-g -O0" ;;' >> /compiler/scripts/compile-c.sh && \
+    echo '    release) FLAGS="-O2" ;;' >> /compiler/scripts/compile-c.sh && \
+    echo '    size) FLAGS="-Os -s" ;;' >> /compiler/scripts/compile-c.sh && \
+    echo '    *) FLAGS="-O2" ;;' >> /compiler/scripts/compile-c.sh && \
+    echo 'esac' >> /compiler/scripts/compile-c.sh && \
+    echo 'exec gcc -static $FLAGS -o "$OUTPUT_PATH" "$SOURCE_PATH" -lm' >> /compiler/scripts/compile-c.sh
+
+RUN echo '#!/bin/bash' > /compiler/scripts/compile-cpp.sh && \
+    echo 'set -e' >> /compiler/scripts/compile-cpp.sh && \
+    echo 'case "$OPTIMIZATION" in' >> /compiler/scripts/compile-cpp.sh && \
+    echo '    debug) FLAGS="-g -O0" ;;' >> /compiler/scripts/compile-cpp.sh && \
+    echo '    release) FLAGS="-O2" ;;' >> /compiler/scripts/compile-cpp.sh && \
+    echo '    size) FLAGS="-Os -s" ;;' >> /compiler/scripts/compile-cpp.sh && \
+    echo '    *) FLAGS="-O2" ;;' >> /compiler/scripts/compile-cpp.sh && \
+    echo 'esac' >> /compiler/scripts/compile-cpp.sh && \
+    echo 'exec g++ -static $FLAGS -o "$OUTPUT_PATH" "$SOURCE_PATH" -lm' >> /compiler/scripts/compile-cpp.sh
+
+WORKDIR /work
+
+ENTRYPOINT ["/compiler/compile.sh"]

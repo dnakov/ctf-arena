@@ -1,0 +1,86 @@
+# Mid-tier compiler image - reliable languages only
+# Includes: C, C++, Rust, Go, Zig, Assembly, Nim, Pascal, OCaml, Erlang, Elixir, Python, TypeScript/JS
+
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# Base tools and compilers
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    wget \
+    xz-utils \
+    unzip \
+    # C/C++
+    gcc \
+    g++ \
+    musl-dev \
+    musl-tools \
+    binutils \
+    make \
+    # Build tools
+    pkg-config \
+    libgmp-dev \
+    libc6-dev \
+    zlib1g-dev \
+    xxd \
+    # Nim
+    nim \
+    # Pascal
+    fpc \
+    # OCaml
+    ocaml \
+    # Lua
+    lua5.4 \
+    liblua5.4-0 \
+    liblua5.4-dev \
+    # Perl
+    perl \
+    libpar-packer-perl \
+    # Erlang/Elixir
+    erlang-base \
+    erlang-dev \
+    elixir \
+    # Python
+    python3 \
+    python3-pip \
+    python3-dev \
+    patchelf \
+    ccache \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python packages
+RUN pip3 install --break-system-packages nuitka ordered-set zstandard
+
+# Rust
+ENV RUSTUP_HOME=/usr/local/rustup
+ENV CARGO_HOME=/usr/local/cargo
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path \
+    && /usr/local/cargo/bin/rustup target add x86_64-unknown-linux-musl
+
+# Go
+RUN curl -fsSL https://go.dev/dl/go1.23.5.linux-amd64.tar.gz | tar -C /usr/local -xzf -
+
+# Zig
+RUN curl -fsSL https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz | tar -C /usr/local -xJf - \
+    && ln -s /usr/local/zig-linux-x86_64-0.13.0 /usr/local/zig
+
+# Bun (for TypeScript/JavaScript)
+RUN curl -fsSL https://bun.sh/install | bash
+ENV BUN_INSTALL=/root/.bun
+
+# Set up PATH
+ENV PATH=/usr/local/cargo/bin:/usr/local/go/bin:/usr/local/zig:/root/.bun/bin:$PATH
+ENV GOROOT=/usr/local/go
+
+# Copy compile scripts
+COPY compile.sh /compiler/compile.sh
+COPY scripts/ /compiler/scripts/
+
+RUN chmod +x /compiler/compile.sh /compiler/scripts/*.sh
+
+WORKDIR /work
+
+ENTRYPOINT ["/compiler/compile.sh"]

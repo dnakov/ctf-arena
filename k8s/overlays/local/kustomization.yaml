@@ -1,0 +1,61 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ctf-arena
+
+resources:
+  - ../../base
+
+# Use local registry images for pods
+images:
+  - name: ctf-api
+    newName: localhost:5001/ctf-api
+  - name: ctf-worker
+    newName: localhost:5001/ctf-worker
+  - name: compile-worker
+    newName: localhost:5001/compile-worker
+  - name: ctf-web
+    newName: localhost:5001/ctf-web
+
+patches:
+  # Update configmap: DinD pulls from kind-registry:5000 (docker network)
+  - patch: |-
+      - op: replace
+        path: /data/SANDBOX_IMAGE
+        value: "kind-registry:5000/sandbox:latest"
+    target:
+      kind: ConfigMap
+      name: ctf-api-config
+
+  # Compile worker: use local image (loaded directly into DinD)
+  # The compiler image is too large for registry, load via: docker save | kubectl exec -i ... docker load
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env/1/value
+        value: "compiler:latest"
+    target:
+      kind: Deployment
+      name: compile-worker
+
+  # Scale down replicas for local dev
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+    target:
+      kind: Deployment
+      name: ctf-worker
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+    target:
+      kind: Deployment
+      name: compile-worker
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+    target:
+      kind: Deployment
+      name: ctf-web
